@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import CreateTripForm from "../components/CreateTripForm";
-import ItineraryCard from "../components/ItineraryCard";
-import PackingList from "../components/PackingList";
+import CreateTripForm from "../../components/CreateTripForm";
+import ItineraryCard from "../../components/ItineraryCard";
+import PackingList from "../../components/PackingList";
 
 class Dashboard extends Component {
   state = {
@@ -53,7 +53,7 @@ class Dashboard extends Component {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
