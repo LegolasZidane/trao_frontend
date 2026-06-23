@@ -25,16 +25,19 @@ class Register extends Component {
     });
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: this.state.email,
+            password: this.state.password,
+          }),
         },
-        body: JSON.stringify({
-          email: this.state.email,
-          password: this.state.password,
-        }),
-      });
+      );
 
       const data = await response.json();
 

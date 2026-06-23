@@ -27,22 +27,25 @@ class CreateTripForm extends Component {
     });
 
     try {
-      const response = await fetch("http://localhost:5000/api/trips/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/trips/generate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            destination: this.state.destination,
+            durationDays: Number(this.state.durationDays),
+            budgetTier: this.state.budgetTier,
+            interests: this.state.interests
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean),
+          }),
         },
-        body: JSON.stringify({
-          destination: this.state.destination,
-          durationDays: Number(this.state.durationDays),
-          budgetTier: this.state.budgetTier,
-          interests: this.state.interests
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean),
-        }),
-      });
+      );
 
       const data = await response.json();
 

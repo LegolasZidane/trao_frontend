@@ -23,11 +23,14 @@ class Dashboard extends Component {
     this.setState({ loading: true });
 
     try {
-      const response = await fetch("http://localhost:5000/api/trips/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/trips/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -52,7 +55,7 @@ class Dashboard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${tripId}`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${tripId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -106,7 +109,7 @@ class Dashboard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${selectedTrip._id}/packing/${itemId}`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${selectedTrip._id}/packing/${itemId}`,
         {
           method: "PATCH",
           headers: {

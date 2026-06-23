@@ -26,7 +26,7 @@ class ItineraryCard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${selectedTrip._id}/days/${dayNumber}/activities`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${selectedTrip._id}/days/${dayNumber}/activities`,
         {
           method: "POST",
           headers: {
@@ -70,7 +70,7 @@ class ItineraryCard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${tripId}`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${tripId}`,
         {
           method: "DELETE",
           headers: {
@@ -84,7 +84,7 @@ class ItineraryCard extends Component {
       if (!response.ok) {
         throw new Error(data.message);
       }
-      
+
       // refresh trips list after delete
       await this.props.refreshTrips();
       // if deleted trip was selected, clear it
@@ -105,7 +105,7 @@ class ItineraryCard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${selectedTrip._id}/days/${dayNumber}/activities/${activityId}`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${selectedTrip._id}/days/${dayNumber}/activities/${activityId}`,
         {
           method: "DELETE",
           headers: {
@@ -138,7 +138,7 @@ class ItineraryCard extends Component {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/trips/${selectedTrip._id}/days/${dayNumber}/regenerate`,
+        `${import.meta.env.VITE_API_URL}/api/trips/${selectedTrip._id}/days/${dayNumber}/regenerate`,
         {
           method: "PATCH",
           headers: {
