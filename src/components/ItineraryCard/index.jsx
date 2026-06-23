@@ -2,29 +2,57 @@ import React, { Component } from "react";
 
 class ItineraryCard extends Component {
   state = {
-    title: "",
-    description: "",
-    estimatedCostUSD: "",
-    timeOfDay: "Morning",
-    feedback: "",
+    activityForms: {},
+    feedbackForms: {},
     error: "",
     regeneratingDay: null,
+    loadingAction: false,
   };
 
-  handleChange = (e) => {
-    this.setState({
-      [e.target.name]: e.target.value,
-    });
+  handleActivityChange = (dayNumber, e) => {
+    const { name, value } = e.target;
+
+    this.setState((prev) => ({
+      activityForms: {
+        ...prev.activityForms,
+        [dayNumber]: {
+          ...prev.activityForms[dayNumber],
+          [name]: value,
+        },
+      },
+    }));
+  };
+
+  handleFeedbackChange = (dayNumber, e) => {
+    this.setState((prev) => ({
+      feedbackForms: {
+        ...prev.feedbackForms,
+        [dayNumber]: e.target.value,
+      },
+    }));
+  };
+
+  getActivityForm = (dayNumber) => {
+    return (
+      this.state.activityForms[dayNumber] || {
+        title: "",
+        description: "",
+        estimatedCostUSD: "",
+        timeOfDay: "Morning",
+      }
+    );
   };
 
   addActivity = async (dayNumber) => {
     const { selectedTrip, refreshTrip } = this.props;
-
     if (!selectedTrip?._id) return;
 
+    const form = this.getActivityForm(dayNumber);
     const token = localStorage.getItem("token");
 
     try {
+      this.setState({ loadingAction: true });
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/trips/${selectedTrip._id}/days/${dayNumber}/activities`,
         {
@@ -34,32 +62,34 @@ class ItineraryCard extends Component {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            title: this.state.title,
-            description: this.state.description,
-            estimatedCostUSD: Number(this.state.estimatedCostUSD),
-            timeOfDay: this.state.timeOfDay,
+            title: form.title,
+            description: form.description,
+            estimatedCostUSD: Number(form.estimatedCostUSD),
+            timeOfDay: form.timeOfDay,
           }),
         },
       );
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      if (!response.ok) throw new Error(data.message);
 
       await refreshTrip(selectedTrip._id);
 
-      this.setState({
-        title: "",
-        description: "",
-        estimatedCostUSD: "",
-        timeOfDay: "Morning",
-      });
+      this.setState((prev) => ({
+        activityForms: {
+          ...prev.activityForms,
+          [dayNumber]: {
+            title: "",
+            description: "",
+            estimatedCostUSD: "",
+            timeOfDay: "Morning",
+          },
+        },
+      }));
     } catch (error) {
-      this.setState({
-        error: error.message,
-      });
+      this.setState({ error: error.message });
+    } finally {
+      this.setState({ loadingAction: false });
     }
   };
 
@@ -80,14 +110,10 @@ class ItineraryCard extends Component {
       );
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
 
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
-
-      // refresh trips list after delete
       await this.props.refreshTrips();
-      // if deleted trip was selected, clear it
+
       if (this.props.selectedTrip?._id === tripId) {
         this.props.onTripSelect(null);
       }
@@ -98,7 +124,6 @@ class ItineraryCard extends Component {
 
   deleteActivity = async (dayNumber, activityId) => {
     const { selectedTrip, refreshTrip } = this.props;
-
     if (!selectedTrip?._id) return;
 
     const token = localStorage.getItem("token");
@@ -115,26 +140,22 @@ class ItineraryCard extends Component {
       );
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      if (!response.ok) throw new Error(data.message);
 
       await refreshTrip(selectedTrip._id);
     } catch (error) {
-      this.setState({
-        error: error.message,
-      });
+      this.setState({ error: error.message });
     }
   };
 
   regenerateDay = async (dayNumber) => {
-    this.setState({ regeneratingDay: dayNumber });
-
     const { selectedTrip, refreshTrip } = this.props;
-
     if (!selectedTrip?._id) return;
+
     const token = localStorage.getItem("token");
+    const feedback = this.state.feedbackForms[dayNumber] || "";
+
+    this.setState({ regeneratingDay: dayNumber });
 
     try {
       const response = await fetch(
@@ -145,27 +166,23 @@ class ItineraryCard extends Component {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            feedback: this.state.feedback,
-          }),
+          body: JSON.stringify({ feedback }),
         },
       );
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      if (!response.ok) throw new Error(data.message);
 
       await refreshTrip(selectedTrip._id);
 
-      this.setState({
-        feedback: "",
-      });
+      this.setState((prev) => ({
+        feedbackForms: {
+          ...prev.feedbackForms,
+          [dayNumber]: "",
+        },
+      }));
     } catch (error) {
-      this.setState({
-        error: error.message,
-      });
+      this.setState({ error: error.message });
     } finally {
       this.setState({ regeneratingDay: null });
     }
@@ -176,7 +193,7 @@ class ItineraryCard extends Component {
 
     return (
       <div className="space-y-6">
-        {/* Trip Selector */}
+        {/* TRIP SELECTOR (UNCHANGED UI) */}
         <div className="bg-white rounded-2xl shadow-md p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">My Trips</h2>
 
@@ -191,40 +208,39 @@ class ItineraryCard extends Component {
                   <button
                     onClick={() => onTripSelect(trip._id)}
                     className="
-          px-5 py-3
-          rounded-xl
-          border border-slate-300
-          bg-white
-          font-medium
-          text-slate-700
-          shadow-sm
-          cursor-pointer
-          transition-all duration-200
-          hover:bg-blue-50
-          hover:border-blue-400
-          hover:text-blue-700
-          hover:shadow-md
-          hover:-translate-y-1
-          active:translate-y-0
-        "
+                      px-5 py-3
+                      rounded-xl
+                      border border-slate-300
+                      bg-white
+                      font-medium
+                      text-slate-700
+                      shadow-sm
+                      cursor-pointer
+                      transition-all duration-200
+                      hover:bg-blue-50
+                      hover:border-blue-400
+                      hover:text-blue-700
+                      hover:shadow-md
+                      hover:-translate-y-1
+                      active:translate-y-0
+                    "
                   >
                     ✈️ {trip.destination}
                   </button>
 
-                  {/* DELETE BUTTON */}
                   <button
                     onClick={() => this.deleteTrip(trip._id)}
                     className="
-          px-3 py-2
-          rounded-lg
-          bg-red-500
-          hover:bg-red-600
-          text-white
-          text-sm
-          shadow-sm
-          transition-all
-          hover:-translate-y-0.5
-        "
+                      px-3 py-2
+                      rounded-lg
+                      bg-red-500
+                      hover:bg-red-600
+                      text-white
+                      text-sm
+                      shadow-sm
+                      transition-all
+                      hover:-translate-y-0.5
+                    "
                   >
                     Delete
                   </button>
@@ -234,21 +250,22 @@ class ItineraryCard extends Component {
           )}
         </div>
 
+        {/* NO TRIP SELECTED */}
         {!selectedTrip && (
           <div className="bg-white rounded-2xl shadow-md p-8 text-center">
             <h3 className="text-xl font-semibold text-gray-700">
               Select a trip
             </h3>
-
             <p className="text-gray-500 mt-2">
               Choose a trip above to view the itinerary.
             </p>
           </div>
         )}
 
+        {/* SELECTED TRIP */}
         {selectedTrip && (
           <div className="space-y-6">
-            {/* Trip Header */}
+            {/* HEADER */}
             <div className="bg-white rounded-2xl shadow-md p-6">
               <h2 className="text-3xl font-bold text-gray-800">
                 {selectedTrip.destination}
@@ -260,133 +277,154 @@ class ItineraryCard extends Component {
               </div>
             </div>
 
-            {/* Days */}
-            {selectedTrip.itinerary.map((day) => (
-              <div
-                key={day.dayNumber}
-                className="bg-white rounded-2xl shadow-md p-6"
-              >
-                <h3 className="text-2xl font-bold mb-5">Day {day.dayNumber}</h3>
+            {/* DAYS */}
+            {selectedTrip.itinerary.map((day) => {
+              const form = this.getActivityForm(day.dayNumber);
 
-                {/* Activities */}
-                <div className="space-y-4 mb-6">
-                  {day.activities.map((activity) => (
-                    <div
-                      key={activity._id}
-                      className="border rounded-xl p-4 bg-slate-50"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-semibold text-lg">
-                            {activity.title}
-                          </h4>
+              return (
+                <div
+                  key={day.dayNumber}
+                  className="bg-white rounded-2xl shadow-md p-6"
+                >
+                  <h3 className="text-2xl font-bold mb-5">
+                    Day {day.dayNumber}
+                  </h3>
 
-                          <p className="text-gray-600 mt-1">
-                            {activity.description}
-                          </p>
+                  {/* ACTIVITIES */}
+                  <div className="space-y-4 mb-6">
+                    {day.activities.map((activity) => (
+                      <div
+                        key={activity._id}
+                        className="border rounded-xl p-4 bg-slate-50"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-lg">
+                              {activity.title}
+                            </h4>
+                            <p className="text-gray-600 mt-1">
+                              {activity.description}
+                            </p>
 
-                          <div className="flex gap-4 mt-3 text-sm text-gray-500">
-                            <span>🕒 {activity.timeOfDay}</span>
-                            <span>💵 ${activity.estimatedCostUSD}</span>
+                            <div className="flex gap-4 mt-3 text-sm text-gray-500">
+                              <span>🕒 {activity.timeOfDay}</span>
+                              <span>💵 ${activity.estimatedCostUSD}</span>
+                            </div>
                           </div>
+
+                          <button
+                            onClick={() =>
+                              this.deleteActivity(day.dayNumber, activity._id)
+                            }
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+                          >
+                            Delete
+                          </button>
                         </div>
-
-                        <button
-                          onClick={() =>
-                            this.deleteActivity(day.dayNumber, activity._id)
-                          }
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
-                        >
-                          Delete
-                        </button>
                       </div>
+                    ))}
+                  </div>
+
+                  {/* ADD ACTIVITY */}
+                  <div className="border-t pt-6">
+                    <h4 className="font-semibold text-lg mb-4">Add Activity</h4>
+
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        name="title"
+                        placeholder="Activity Title"
+                        value={form.title}
+                        onChange={(e) =>
+                          this.handleActivityChange(day.dayNumber, e)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                      />
+
+                      <input
+                        type="text"
+                        name="description"
+                        placeholder="Description"
+                        value={form.description}
+                        onChange={(e) =>
+                          this.handleActivityChange(day.dayNumber, e)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                      />
+
+                      <input
+                        type="number"
+                        name="estimatedCostUSD"
+                        placeholder="Estimated Cost"
+                        value={form.estimatedCostUSD}
+                        onChange={(e) =>
+                          this.handleActivityChange(day.dayNumber, e)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                      />
+
+                      <select
+                        name="timeOfDay"
+                        value={form.timeOfDay}
+                        onChange={(e) =>
+                          this.handleActivityChange(day.dayNumber, e)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                      >
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Evening">Evening</option>
+                        <option value="Night">Night</option>
+                      </select>
+
+                      <button
+                        onClick={() => this.addActivity(day.dayNumber)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+                      >
+                        Add Activity
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                {/* Add Activity */}
-                <div className="border-t pt-6">
-                  <h4 className="font-semibold text-lg mb-4">Add Activity</h4>
+                  {/* REGENERATE */}
+                  <div className="border-t pt-6 mt-6">
+                    <h4 className="font-semibold text-lg mb-4">
+                      Regenerate Day
+                    </h4>
 
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      name="title"
-                      placeholder="Activity Title"
-                      value={this.state.title}
-                      onChange={this.handleChange}
-                      className="w-full border rounded-lg px-4 py-2"
+                    <textarea
+                      name="feedback"
+                      placeholder="Tell AI what you'd like changed..."
+                      value={this.state.feedbackForms[day.dayNumber] || ""}
+                      onChange={(e) =>
+                        this.handleFeedbackChange(day.dayNumber, e)
+                      }
+                      rows="4"
+                      className="w-full border rounded-lg px-4 py-3"
                     />
-
-                    <input
-                      type="text"
-                      name="description"
-                      placeholder="Description"
-                      value={this.state.description}
-                      onChange={this.handleChange}
-                      className="w-full border rounded-lg px-4 py-2"
-                    />
-
-                    <input
-                      type="number"
-                      name="estimatedCostUSD"
-                      placeholder="Estimated Cost"
-                      value={this.state.estimatedCostUSD}
-                      onChange={this.handleChange}
-                      className="w-full border rounded-lg px-4 py-2"
-                    />
-
-                    <select
-                      name="timeOfDay"
-                      value={this.state.timeOfDay}
-                      onChange={this.handleChange}
-                      className="w-full border rounded-lg px-4 py-2"
-                    >
-                      <option value="Morning">Morning</option>
-                      <option value="Afternoon">Afternoon</option>
-                      <option value="Evening">Evening</option>
-                      <option value="Night">Night</option>
-                    </select>
 
                     <button
-                      onClick={() => this.addActivity(day.dayNumber)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+                      onClick={() => this.regenerateDay(day.dayNumber)}
+                      disabled={this.state.regeneratingDay === day.dayNumber}
+                      className="
+                        mt-3 bg-emerald-600 hover:bg-emerald-700
+                        text-white px-5 py-2 rounded-lg
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                      "
                     >
-                      Add Activity
+                      {this.state.regeneratingDay === day.dayNumber ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          Regenerating...
+                        </span>
+                      ) : (
+                        "Regenerate Day"
+                      )}
                     </button>
                   </div>
                 </div>
-
-                {/* Regenerate */}
-                <div className="border-t pt-6 mt-6">
-                  <h4 className="font-semibold text-lg mb-4">Regenerate Day</h4>
-
-                  <textarea
-                    name="feedback"
-                    placeholder="Tell AI what you'd like changed..."
-                    value={this.state.feedback}
-                    onChange={this.handleChange}
-                    rows="4"
-                    className="w-full border rounded-lg px-4 py-3"
-                  />
-
-                  <button
-                    onClick={() => this.regenerateDay(day.dayNumber)}
-                    disabled={this.state.regeneratingDay === day.dayNumber}
-                    className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {this.state.regeneratingDay === day.dayNumber ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        Regenerating...
-                      </span>
-                    ) : (
-                      "Regenerate Day"
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
