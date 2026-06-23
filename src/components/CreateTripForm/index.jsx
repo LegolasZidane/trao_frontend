@@ -77,63 +77,98 @@ class CreateTripForm extends Component {
       this.state;
 
     return (
-      <form onSubmit={this.handleSubmit}>
-        <h2>Create Trip</h2>
+      <div className="bg-white rounded-2xl shadow-md p-6 sticky top-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Trip</h2>
 
-        {error && <p>{error}</p>}
+        <p className="text-gray-500 text-sm mb-6">
+          Generate a personalized travel itinerary with AI.
+        </p>
 
-        <div>
-          <label>Destination</label>
-          <input
-            type="text"
-            name="destination"
-            value={destination}
-            onChange={this.handleChange}
-            required
-          />
-        </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
-        <div>
-          <label>Duration (Days)</label>
-          <input
-            type="number"
-            name="durationDays"
-            value={durationDays}
-            onChange={this.handleChange}
-            min="1"
-            required
-          />
-        </div>
+        <form onSubmit={this.handleSubmit} className="space-y-5">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Destination
+            </label>
 
-        <div>
-          <label>Budget Tier</label>
-          <select
-            name="budgetTier"
-            value={budgetTier}
-            onChange={this.handleChange}
+            <input
+              type="text"
+              name="destination"
+              value={destination}
+              onChange={this.handleChange}
+              placeholder="e.g. Paris"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Duration (Days)
+            </label>
+
+            <input
+              type="number"
+              name="durationDays"
+              value={durationDays}
+              onChange={this.handleChange}
+              min="1"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Budget Tier
+            </label>
+
+            <select
+              name="budgetTier"
+              value={budgetTier}
+              onChange={this.handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Interests
+            </label>
+
+            <input
+              type="text"
+              name="interests"
+              value={interests}
+              onChange={this.handleChange}
+              placeholder="Food, Museums, Shopping"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <p className="text-xs text-gray-400 mt-1">
+              Separate interests with commas.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
           >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Interests (comma separated)</label>
-          <input
-            type="text"
-            name="interests"
-            value={interests}
-            onChange={this.handleChange}
-            placeholder="Food, Museums, Shopping"
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Generating..." : "Generate Trip"}
-        </button>
-      </form>
+            {loading ? "Generating..." : "Generate Trip"}
+          </button>
+        </form>
+      </div>
     );
   }
 }

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Navigate } from "react-router-dom";
 import CreateTripForm from "../../components/CreateTripForm";
 import ItineraryCard from "../../components/ItineraryCard";
 import PackingList from "../../components/PackingList";
@@ -9,6 +10,7 @@ class Dashboard extends Component {
     selectedTrip: null,
     loading: true,
     error: "",
+    logout: false,
   };
 
   componentDidMount() {
@@ -17,6 +19,8 @@ class Dashboard extends Component {
 
   fetchTrips = async () => {
     const token = localStorage.getItem("token");
+
+    this.setState({ loading: true });
 
     try {
       const response = await fetch("http://localhost:5000/api/trips/", {
@@ -80,36 +84,127 @@ class Dashboard extends Component {
   };
 
   handleTripSelect = (tripId) => {
+    if (!tripId) {
+      this.setState({ selectedTrip: null });
+      return;
+    }
+
     this.fetchTripById(tripId);
   };
 
+  handleLogout = () => {
+    localStorage.removeItem("token");
+
+    this.setState({
+      logout: true,
+    });
+  };
+
+  togglePacked = async (itemId) => {
+    const { selectedTrip } = this.state;
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/trips/${selectedTrip._id}/packing/${itemId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const updatedTrip = await response.json();
+
+      if (!response.ok) {
+        throw new Error(updatedTrip.message);
+      }
+
+      this.setState({
+        selectedTrip: updatedTrip,
+      });
+    } catch (error) {
+      this.setState({
+        error: error.message,
+      });
+    }
+  };
+
   render() {
-    const { trips, selectedTrip, loading, error } = this.state;
+    const { trips, selectedTrip, loading, error, logout } = this.state;
+
+    if (logout) {
+      return <Navigate to="/login" replace />;
+    }
 
     if (loading) {
-      return <h2>Loading Dashboard...</h2>;
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-100">
+          <h2 className="text-2xl font-semibold text-gray-700">
+            Loading Dashboard...
+          </h2>
+        </div>
+      );
     }
 
     return (
-      <div>
-        <h1>AI Travel Planner Dashboard</h1>
+      <div className="min-h-screen bg-slate-100">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                AI Travel Planner
+              </h1>
 
-        {error && <p>{error}</p>}
+              <p className="text-gray-500 mt-1">
+                Plan, manage and organize your trips.
+              </p>
+            </div>
 
-        <CreateTripForm onTripCreated={this.handleTripCreated} />
+            <button
+              onClick={this.handleLogout}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
 
-        <hr />
+        <div className="max-w-7xl mx-auto p-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-xl">
+              {error}
+            </div>
+          )}
 
-        <ItineraryCard
-          trips={trips}
-          selectedTrip={selectedTrip}
-          onTripSelect={this.handleTripSelect}
-          refreshTrip={this.fetchTripById}
-        />
+          <div className="grid lg:grid-cols-12 gap-6">
+            {/* Create Trip */}
+            <div className="lg:col-span-3">
+              <CreateTripForm onTripCreated={this.handleTripCreated} />
+            </div>
 
-        <hr />
+            {/* Itinerary */}
+            <div className="lg:col-span-6">
+              <ItineraryCard
+                trips={trips}
+                selectedTrip={selectedTrip}
+                onTripSelect={this.handleTripSelect}
+                refreshTrip={this.fetchTripById}
+                refreshTrips={this.fetchTrips}
+              />
+            </div>
 
-        <PackingList trip={selectedTrip} />
+            {/* Packing List */}
+            <div className="lg:col-span-3">
+              <PackingList
+                trip={selectedTrip}
+                togglePacked={this.togglePacked}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

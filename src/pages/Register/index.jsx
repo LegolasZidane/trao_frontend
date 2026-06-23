@@ -66,42 +66,74 @@ class Register extends Component {
     }
 
     return (
-      <div>
-        <h1>Register</h1>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-blue-100 px-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
 
-        {error && <p>{error}</p>}
-
-        <form onSubmit={this.handleSubmit}>
-          <div>
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={email}
-              onChange={this.handleChange}
-              required
-            />
+            <p className="text-gray-500 mt-2">
+              Start planning your next adventure with AI
+            </p>
           </div>
 
-          <div>
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={password}
-              onChange={this.handleChange}
-              required
-            />
-          </div>
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating Account..." : "Register"}
-          </button>
-        </form>
+          <form onSubmit={this.handleSubmit} className="space-y-5">
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Email
+              </label>
 
-        <p>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+              <input
+                type="email"
+                name="email"
+                value={email}
+                onChange={this.handleChange}
+                placeholder="Enter your email"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Password
+              </label>
+
+              <input
+                type="password"
+                name="password"
+                value={password}
+                onChange={this.handleChange}
+                placeholder="Create a password"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-semibold transition duration-200 disabled:opacity-50"
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </button>
+          </form>
+
+          <p className="text-center text-gray-600 mt-6">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-emerald-600 hover:text-emerald-700 font-semibold"
+            >
+              Login
+            </Link>
+          </p>
+        </div>
       </div>
     );
   }
